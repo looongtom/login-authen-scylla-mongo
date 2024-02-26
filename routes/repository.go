@@ -196,7 +196,7 @@ func GetProfile(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
 }
 
 func Logout(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
-	// Get the token from the Authorization header
+	w.Header().Set("Content-Type", "application/json")
 	tokenString := r.Header.Get("Authorization")
 	if tokenString == "" {
 		w.WriteHeader(http.StatusUnauthorized)
@@ -241,6 +241,8 @@ func Logout(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
 	selectQuery, getNames := qb.Select("history_connections").Where(qb.Eq("username")).AllowFiltering().ToCql()
 	if err := gocqlx.Query(session.Query(selectQuery, userName), getNames).GetRelease(&history); err != nil {
 		fmt.Println("Error getting history:", err)
+		utils.ERROR(w, http.StatusInternalServerError, err)
+		return
 	}
 	fmt.Println("updating history:", history)
 	history.LogoutAt = time.Now().Local()
